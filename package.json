@@ -1,0 +1,15 @@
+{
+  "name": "hytale-tracker-json",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "RM20",
+  "license": "ISC",
+  "dependencies": {
+    "google-auth-library": "^10.5.0",
+    "google-spreadsheet": "^5.0.2"
+  }
+}
