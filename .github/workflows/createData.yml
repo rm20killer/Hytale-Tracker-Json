@@ -1,0 +1,54 @@
+name: Export JSON
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    env:
+      GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Debug secret
+        run: |
+          echo "Length of secret:" ${#GOOGLE_SERVICE_ACCOUNT_KEY}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+    
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate JSON
+        run: node index.js
+
+      - name: Clone target repo
+        env:
+          GIT_ASKPASS: /bin/echo
+          GITHUB_TOKEN: ${{ secrets.TARGET_REPO_PAT }}
+        run: |
+          git clone https://x-access-token:${GITHUB_TOKEN}@github.com/HytaleTracker/HytaleTracker.github.io.git target
+
+      - name: Copy folder
+        run: |
+          mkdir -p target/data
+          cp -r data/ target/data/tweets/
+
+      - name: Commit & push
+        run: |
+          cd target
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add data/
+          git commit -m "Update JSON" || true
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.TARGET_REPO_PAT }}

@@ -4,7 +4,7 @@ const { JWT } = require('google-auth-library');
 const fs = require('fs');
 
 // const doc = new GoogleSpreadsheet(config.spreadsheet);
-const creds = require("../other/googlekey.json");
+const creds = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
 
 module.exports.lookup = async function() {
     await lookup();
@@ -44,9 +44,9 @@ var lookup = async function() {
             Link = LinkText.hyperlink;
         }
         const tweet = sheet.getCell(i-1, 3);
-        const importance = sheet.getCell(i-1, 5);
-        const tags = sheet.getCell(i-1, 7);
-        const notes = sheet.getCell(i-1, 8);
+        const importance = sheet.getCell(i-1, 4);
+        const tags = sheet.getCell(i-1, 5);
+        const notes = sheet.getCell(i-1, 6);
         if (date.value==null){
             break;
         }
@@ -55,7 +55,7 @@ var lookup = async function() {
         const formattedDate = (d.getMonth() + 1) + ' ' + d.getDate() + ' ' + d.getFullYear();
         if(Link!=null){
             console.log(formattedDate + " | " + Author.value + " | " + Link + " | " + tweet.value + " | " + importance.value + " | " + tags.value + " | " + notes.value);
-            let summary = "'"+tweet.value+"' by "+Author.value;
+            let summary = "'"+tweet.value+"'";
             if(notes.value!=null){
                 summary += "\n\n(" + notes.value + ")";
             }
@@ -75,6 +75,7 @@ var lookup = async function() {
                         Link
                     ]
                 }];
+                if(summary == "'null'") summary = "";
                 tweets.push({
                 mainPlatform: "tweet",
                 summary: LinkText.value,
@@ -90,7 +91,14 @@ var lookup = async function() {
     }
     console.log(tweets.length + " tweets found");
     //export to 2025-3.json
-    fs.writeFileSync('data/devs-post-revival.json', JSON.stringify(tweets, null, 2));
+    const filesToCreate = Math.ceil(tweets.length / 100);
+    for(let i = 0; i < filesToCreate; i++){
+        const chunk = tweets.slice(i * 100, i * 100 + 100);
+        const reversedChunk = chunk.reverse();
+        fs.writeFileSync(`data/devs-post-revival${i}.json`, JSON.stringify(reversedChunk, null, 2));
+    }
 
+    fs.writeFileSync("data/tweetIndexes.json", JSON.stringify(filesToCreate, null, 2));
+    fs.writeFileSync("data/tweetCount.json", JSON.stringify(tweets.length + 1, null, 2))
 
 }
